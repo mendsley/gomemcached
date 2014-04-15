@@ -62,11 +62,15 @@ func (c Client) IsHealthy() bool {
 func (c *Client) Send(req *gomemcached.MCRequest) (rv *gomemcached.MCResponse, err error) {
 	_, err = transmitRequest(c.conn, req)
 	if err != nil {
+		log.Printf("[COUCHBASE] Send.transmitRequest failed: %v", err)
 		c.healthy = false
 		return
 	}
 	resp, _, err := getResponse(c.conn, c.hdrBuf)
 	c.healthy = !gomemcached.IsFatal(err)
+	if gomemcached.IsFatal(err) {
+		log.Printf("[COUCHBASE] Send.getResponse failed (%v): %v", c.healthy, err)
+	}
 	return resp, err
 }
 
@@ -74,6 +78,7 @@ func (c *Client) Send(req *gomemcached.MCRequest) (rv *gomemcached.MCResponse, e
 func (c *Client) Transmit(req *gomemcached.MCRequest) error {
 	_, err := transmitRequest(c.conn, req)
 	if err != nil {
+		log.Printf("[COUCHBASE] Transmit.transmitRequest failed: %v", err)
 		c.healthy = false
 	}
 	return err
@@ -83,6 +88,7 @@ func (c *Client) Transmit(req *gomemcached.MCRequest) error {
 func (c *Client) Receive() (*gomemcached.MCResponse, error) {
 	resp, _, err := getResponse(c.conn, c.hdrBuf)
 	if err != nil {
+		log.Printf("[COUCHBASE] Receive.getResponse failed: %v", err)
 		c.healthy = false
 	}
 	return resp, err
